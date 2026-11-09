@@ -26,9 +26,22 @@ jobs:
       - name: App name on the phone
         run: sed -i 's/android:label="[^"]*"/android:label="Muhaymin Waves"/' android/app/src/main/AndroidManifest.xml
 
+      - name: Use official Gradle server (bin)
+        run: |
+          sed -i -E 's#^distributionUrl=.*gradle-([0-9.]+)-(all|bin)\.zip#distributionUrl=https\\://services.gradle.org/distributions/gradle-\1-bin.zip#' android/gradle/wrapper/gradle-wrapper.properties
+          cat android/gradle/wrapper/gradle-wrapper.properties
+
       - run: flutter pub get
       - run: flutter test
-      - run: flutter build apk --release
+
+      - name: Build APK (with retries)
+        run: |
+          for i in 1 2 3 4; do
+            flutter build apk --release && exit 0
+            echo "Build failed, retry $i in 45s..."
+            sleep 45
+          done
+          exit 1
 
       - uses: actions/upload-artifact@v4
         with:
