@@ -45,12 +45,38 @@ jobs:
           sed -i -E "s#^distributionUrl=.*#distributionUrl=file:///tmp/gradle-$V-bin.zip#" $P
           cat $P
 
+      - name: Maven mirrors (avoid GitHub 504)
+        run: |
+          mkdir -p ~/.gradle/init.d
+          cat > ~/.gradle/init.d/mirrors.gradle <<'GRADLE'
+          def mirrorUrls = [
+            'https://maven-central.storage-download.googleapis.com/maven2/',
+            'https://maven.aliyun.com/repository/public/',
+            'https://maven.aliyun.com/repository/google/',
+            'https://maven.aliyun.com/repository/gradle-plugin/'
+          ]
+          beforeSettings { settings ->
+            settings.pluginManagement.repositories {
+              mirrorUrls.each { u -> maven { url = new URI(u) } }
+            }
+          }
+          allprojects {
+            buildscript.repositories {
+              mirrorUrls.each { u -> maven { url = new URI(u) } }
+            }
+            repositories {
+              mirrorUrls.each { u -> maven { url = new URI(u) } }
+            }
+          }
+          GRADLE
+          cat ~/.gradle/init.d/mirrors.gradle
+
       - run: flutter pub get
       - run: flutter test
 
       - name: Build APK (with retries)
         run: |
-          for i in 1 2 3 4; do
+          for i in 1 2 3; do
             flutter build apk --release && exit 0
             echo "Build failed, retry $i in 45s..."
             sleep 45
