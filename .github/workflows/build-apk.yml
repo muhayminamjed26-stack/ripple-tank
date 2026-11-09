@@ -59,12 +59,7 @@ jobs:
             settings.pluginManagement.repositories {
               mirrorUrls.each { u -> maven { url = new URI(u) } }
             }
-          }
-          allprojects {
-            buildscript.repositories {
-              mirrorUrls.each { u -> maven { url = new URI(u) } }
-            }
-            repositories {
+            settings.dependencyResolutionManagement.repositories {
               mirrorUrls.each { u -> maven { url = new URI(u) } }
             }
           }
